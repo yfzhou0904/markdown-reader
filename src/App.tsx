@@ -104,6 +104,8 @@ function readStoredSettings(): ReaderSettings {
 function App() {
   const [source, setSource] = useState<string>(() => readStoredMarkdown());
   const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
+  const [isReaderFullscreen, setIsReaderFullscreen] = useState(false);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.markdown, source);
@@ -125,8 +127,30 @@ function App() {
 
   const readingMinutes = Math.max(1, Math.round(wordCount / 220));
 
+  useEffect(() => {
+    if (!isPreferencesOpen) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsPreferencesOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isPreferencesOpen]);
+
   return (
-    <main className={`app-shell theme-${settings.theme}`}>
+    <main
+      className={`app-shell theme-${settings.theme} ${
+        isReaderFullscreen ? "is-reader-fullscreen" : ""
+      }`}
+    >
       <header className="topbar">
         <div>
           <p className="eyebrow">MVP phase 1</p>
@@ -139,6 +163,20 @@ function App() {
         <div className="status-group" aria-label="document status">
           <div className="status-pill">{wordCount} words</div>
           <div className="status-pill">{readingMinutes} min read</div>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => setIsPreferencesOpen(true)}
+          >
+            Preferences
+          </button>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => setIsReaderFullscreen((current) => !current)}
+          >
+            {isReaderFullscreen ? "Exit Fullscreen" : "Reader Fullscreen"}
+          </button>
           <button
             className="ghost-button"
             type="button"
@@ -174,15 +212,65 @@ function App() {
         </aside>
 
         <section className="reader-pane">
-          <div className="pane-header pane-header-stack">
+          <div className="pane-header">
             <div>
               <h2>Reader</h2>
-              <span>Typography-first rendering surface.</span>
+              <span>
+                {isReaderFullscreen
+                  ? "Reader expanded to the app width."
+                  : "Typography-first rendering surface."}
+              </span>
+            </div>
+          </div>
+
+          <div className="reader-card">
+            <article
+              className={`reader-preview font-${settings.fontFamily}`}
+              style={
+                {
+                  "--reader-font-size": `${settings.fontSize}px`,
+                  "--reader-line-height": settings.lineHeight,
+                  "--reader-width": isReaderFullscreen
+                    ? "100%"
+                    : `${settings.contentWidth}px`,
+                } as CSSProperties
+              }
+              dangerouslySetInnerHTML={{ __html: renderedHtml }}
+            />
+          </div>
+        </section>
+      </section>
+
+      {isPreferencesOpen ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setIsPreferencesOpen(false)}
+        >
+          <section
+            className="preferences-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preferences-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">Reader settings</p>
+                <h2 id="preferences-title">Preferences</h2>
+              </div>
+              <button
+                className="ghost-button"
+                type="button"
+                onClick={() => setIsPreferencesOpen(false)}
+              >
+                Done
+              </button>
             </div>
 
-            <div className="reader-controls" aria-label="reader settings">
-              <label className="control-pill">
-                <span>Font</span>
+            <div className="modal-controls" aria-label="reader settings">
+              <label className="control-row">
+                <span>Font family</span>
                 <select
                   value={settings.fontFamily}
                   onChange={(event) =>
@@ -198,61 +286,67 @@ function App() {
                 </select>
               </label>
 
-              <label className="control-pill control-range">
-                <span>Size</span>
-                <input
-                  type="range"
-                  min="16"
-                  max="28"
-                  step="1"
-                  value={settings.fontSize}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      fontSize: Number(event.target.value),
-                    }))
-                  }
-                />
-                <strong>{settings.fontSize}px</strong>
+              <label className="control-row">
+                <span>Font size</span>
+                <div className="slider-control">
+                  <input
+                    type="range"
+                    min="16"
+                    max="28"
+                    step="1"
+                    value={settings.fontSize}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        fontSize: Number(event.target.value),
+                      }))
+                    }
+                  />
+                  <strong>{settings.fontSize}px</strong>
+                </div>
               </label>
 
-              <label className="control-pill control-range">
-                <span>Line</span>
-                <input
-                  type="range"
-                  min="1.4"
-                  max="2.1"
-                  step="0.05"
-                  value={settings.lineHeight}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      lineHeight: Number(event.target.value),
-                    }))
-                  }
-                />
-                <strong>{settings.lineHeight.toFixed(2)}</strong>
+              <label className="control-row">
+                <span>Line height</span>
+                <div className="slider-control">
+                  <input
+                    type="range"
+                    min="1.4"
+                    max="2.1"
+                    step="0.05"
+                    value={settings.lineHeight}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        lineHeight: Number(event.target.value),
+                      }))
+                    }
+                  />
+                  <strong>{settings.lineHeight.toFixed(2)}</strong>
+                </div>
               </label>
 
-              <label className="control-pill control-range">
-                <span>Width</span>
-                <input
-                  type="range"
-                  min="560"
-                  max="920"
-                  step="20"
-                  value={settings.contentWidth}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      contentWidth: Number(event.target.value),
-                    }))
-                  }
-                />
-                <strong>{settings.contentWidth}px</strong>
+              <label className="control-row">
+                <span>Content width</span>
+                <div className="slider-control">
+                  <input
+                    type="range"
+                    min="560"
+                    max="920"
+                    step="20"
+                    value={settings.contentWidth}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        contentWidth: Number(event.target.value),
+                      }))
+                    }
+                  />
+                  <strong>{settings.contentWidth}px</strong>
+                </div>
               </label>
 
-              <label className="control-pill">
+              <label className="control-row">
                 <span>Theme</span>
                 <select
                   value={settings.theme}
@@ -269,23 +363,9 @@ function App() {
                 </select>
               </label>
             </div>
-          </div>
-
-          <div className="reader-card">
-            <article
-              className={`reader-preview font-${settings.fontFamily}`}
-              style={
-                {
-                  "--reader-font-size": `${settings.fontSize}px`,
-                  "--reader-line-height": settings.lineHeight,
-                  "--reader-width": `${settings.contentWidth}px`,
-                } as CSSProperties
-              }
-              dangerouslySetInnerHTML={{ __html: renderedHtml }}
-            />
-          </div>
-        </section>
-      </section>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
