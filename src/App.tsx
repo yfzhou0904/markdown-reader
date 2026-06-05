@@ -209,17 +209,6 @@ function App() {
         </aside>
 
         <section className="reader-pane">
-          <div className="pane-header">
-            <div>
-              <h2>Reader</h2>
-              <span>
-                {isReaderFullscreen
-                  ? "Reader expanded to the app width."
-                  : "Typography-first rendering surface."}
-              </span>
-            </div>
-          </div>
-
           <div className="reader-card">
             <article
               className={`reader-preview font-${settings.fontFamily}`}

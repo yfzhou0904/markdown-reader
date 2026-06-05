@@ -59,6 +59,7 @@ textarea {
 .app-shell {
   --app-bg: #ffffff;
   --panel-bg: #ffffff;
+  --modal-bg: #ffffff;
   --panel-border: #d8d8d8;
   --panel-muted: #666666;
   --panel-text: #111111;
@@ -80,6 +81,7 @@ textarea {
 .theme-light {
   --app-bg: #ffffff;
   --panel-bg: #ffffff;
+  --modal-bg: #ffffff;
   --panel-border: #d8d8d8;
   --panel-muted: #666666;
   --panel-text: #111111;
@@ -92,6 +94,7 @@ textarea {
 .theme-paper {
   --app-bg: linear-gradient(180deg, #f6f1e8 0%, #eee6d8 100%);
   --panel-bg: rgba(252, 247, 239, 0.88);
+  --modal-bg: #fbf6ed;
   --panel-border: #d9cdb9;
   --panel-muted: #6a5d4f;
   --panel-text: #251f18;
@@ -104,6 +107,7 @@ textarea {
 .theme-dark {
   --app-bg: linear-gradient(180deg, #171718 0%, #111214 100%);
   --panel-bg: rgba(28, 31, 35, 0.86);
+  --modal-bg: #1c1f23;
   --panel-border: #32363c;
   --panel-muted: #9ea7b3;
   --panel-text: #eef1f4;
@@ -395,7 +399,7 @@ textarea {
   overflow: auto;
   border: 1px solid var(--panel-border);
   border-radius: 8px;
-  background: var(--panel-bg);
+  background: var(--modal-bg);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
   color: var(--panel-text);
 }
