@@ -77,16 +77,28 @@ textarea {
   color: var(--panel-text);
 }
 
-.theme-sepia {
-  --app-bg: linear-gradient(180deg, #f1e6d6 0%, #e5d5bf 100%);
-  --panel-bg: rgba(250, 241, 228, 0.84);
-  --panel-border: #cfbea7;
-  --panel-muted: #645547;
-  --panel-text: #241d17;
-  --reader-bg: #f8efdf;
-  --reader-text: #34291f;
-  --reader-muted: #675646;
-  --reader-rule: #c5ab8d;
+.theme-light {
+  --app-bg: #ffffff;
+  --panel-bg: #ffffff;
+  --panel-border: #d8d8d8;
+  --panel-muted: #666666;
+  --panel-text: #111111;
+  --reader-bg: #ffffff;
+  --reader-text: #111111;
+  --reader-muted: #555555;
+  --reader-rule: #d6d6d6;
+}
+
+.theme-paper {
+  --app-bg: linear-gradient(180deg, #f6f1e8 0%, #eee6d8 100%);
+  --panel-bg: rgba(252, 247, 239, 0.88);
+  --panel-border: #d9cdb9;
+  --panel-muted: #6a5d4f;
+  --panel-text: #251f18;
+  --reader-bg: #fbf6ed;
+  --reader-text: #2d241b;
+  --reader-muted: #6b5a48;
+  --reader-rule: #d9ccba;
 }
 
 .theme-dark {

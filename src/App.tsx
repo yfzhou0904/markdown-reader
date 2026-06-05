@@ -4,7 +4,7 @@ import MarkdownIt from "markdown-it";
 import "./App.css";
 
 type FontFamily = "serif" | "sans" | "mono";
-type Theme = "paper" | "dark" | "sepia";
+type Theme = "light" | "paper" | "dark";
 
 type ReaderSettings = {
   fontFamily: FontFamily;
@@ -39,7 +39,7 @@ const preferences = {
   fontFamily: "serif",
   fontSize: 19,
   lineHeight: 1.75,
-  theme: "paper",
+  theme: "light",
 };
 \`\`\`
 `;
@@ -85,9 +85,13 @@ function readStoredSettings(): ReaderSettings {
           ? parsed.lineHeight
           : DEFAULT_SETTINGS.lineHeight,
       theme:
-        parsed.theme === "dark" || parsed.theme === "sepia"
+        parsed.theme === "light" ||
+        parsed.theme === "paper" ||
+        parsed.theme === "dark"
           ? parsed.theme
-          : "paper",
+          : parsed.theme === "sepia"
+            ? "paper"
+            : "light",
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -327,8 +331,8 @@ function App() {
                     }))
                   }
                 >
+                  <option value="light">Light</option>
                   <option value="paper">Paper</option>
-                  <option value="sepia">Sepia</option>
                   <option value="dark">Dark</option>
                 </select>
               </label>
