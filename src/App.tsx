@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import DOMPurify from "dompurify";
-import MarkdownIt from "markdown-it";
+import { useEffect, useMemo, useState, type CSSProperties, type ComponentProps } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./App.css";
+import { Mermaid } from "./Mermaid";
 
 type FontFamily = "serif" | "sans" | "mono";
 type Theme = "light" | "paper" | "dark";
@@ -42,6 +43,12 @@ const preferences = {
   theme: "light",
 };
 \`\`\`
+
+\`\`\`mermaid
+flowchart LR
+  Draft[Paste Markdown] --> Reader[Open Reader View]
+  Reader --> Diagram[Render Mermaid]
+\`\`\`
 `;
 
 const DEFAULT_SETTINGS: ReaderSettings = {
@@ -50,13 +57,6 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   lineHeight: 1.75,
   theme: "paper",
 };
-
-const markdown = new MarkdownIt({
-  html: false,
-  linkify: true,
-  breaks: true,
-  typographer: true,
-});
 
 function readStoredMarkdown(): string {
   const stored = window.localStorage.getItem(STORAGE_KEYS.markdown);
@@ -112,18 +112,45 @@ function App() {
     window.localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [settings]);
 
-  const renderedHtml = useMemo(() => {
-    const dirtyHtml = markdown.render(source);
-    return DOMPurify.sanitize(dirtyHtml);
-  }, [source]);
-
   const wordCount = useMemo(() => {
     const words = source.trim().match(/\S+/g);
     return words ? words.length : 0;
   }, [source]);
-
   const readingMinutes = Math.max(1, Math.round(wordCount / 220));
   const readingSummary = `${wordCount} words • ${readingMinutes} min read`;
+
+  const markdownComponents = useMemo(
+    () =>
+      ({
+        a({ href, children, ...props }: ComponentProps<"a">) {
+          const isExternal = typeof href === "string" && /^https?:\/\//.test(href);
+          return (
+            <a
+              href={href}
+              {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              {...props}
+            >
+              {children}
+            </a>
+          );
+        },
+        code({ className, children, ...props }: ComponentProps<"code">) {
+          const match = /language-(\w+)/.exec(className ?? "");
+          const code = String(children ?? "");
+
+          if (match?.[1] === "mermaid") {
+            return <Mermaid chart={code} />;
+          }
+
+          return (
+            <code className={className} {...props}>
+              {children}
+            </code>
+          );
+        },
+      }) as const,
+    [],
+  );
 
   const handleReset = () => {
     setSource(DEFAULT_MARKDOWN);
@@ -161,7 +188,15 @@ function App() {
             >
               ×
             </button>
-          ) : null}
+          ) : (
+            <button
+              className="primary-button primary-button-left"
+              type="button"
+              onClick={() => setIsReaderOpen(true)}
+            >
+              Reader View
+            </button>
+          )}
           <div className="status-pill">{readingSummary}</div>
           <button
             className="ghost-button"
@@ -170,15 +205,6 @@ function App() {
           >
             Preferences
           </button>
-          {!isReaderOpen ? (
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => setIsReaderOpen(true)}
-            >
-              Reader View
-            </button>
-          ) : null}
         </div>
       </header>
 
@@ -204,8 +230,11 @@ function App() {
                   "--reader-line-height": settings.lineHeight,
                 } as CSSProperties
               }
-              dangerouslySetInnerHTML={{ __html: renderedHtml }}
-            />
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {source}
+              </ReactMarkdown>
+            </article>
           </div>
         )}
       </section>

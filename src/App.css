@@ -164,6 +164,10 @@ textarea {
   color: var(--reader-bg);
 }
 
+.primary-button-left {
+  margin-right: auto;
+}
+
 .icon-button {
   appearance: none;
   width: 40px;
@@ -226,6 +230,13 @@ textarea {
 
 .is-reader-open {
   padding: 16px;
+}
+
+.is-reader-open .workspace,
+.is-reader-open .reader-card,
+.is-reader-open .reader-preview {
+  width: 100%;
+  max-width: none;
 }
 
 .reader-preview {
@@ -394,6 +405,26 @@ textarea {
 .reader-preview pre code {
   padding: 0;
   background: transparent;
+}
+
+.reader-preview .mermaid-fallback {
+  margin: 0 0 1em;
+}
+
+.reader-preview .mermaid-diagram {
+  margin: 0 0 1.25em;
+  padding: 16px 18px;
+  border: 1px solid var(--reader-rule);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.04);
+  overflow-x: auto;
+}
+
+.reader-preview .mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
 }
 
 .reader-preview blockquote {
