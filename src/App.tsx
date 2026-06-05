@@ -101,7 +101,7 @@ function readStoredSettings(): ReaderSettings {
 function App() {
   const [source, setSource] = useState<string>(() => readStoredMarkdown());
   const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
-  const [isReaderFullscreen, setIsReaderFullscreen] = useState(false);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   useEffect(() => {
@@ -123,6 +123,12 @@ function App() {
   }, [source]);
 
   const readingMinutes = Math.max(1, Math.round(wordCount / 220));
+  const readingSummary = `${wordCount} words • ${readingMinutes} min read`;
+
+  const handleReset = () => {
+    setSource(DEFAULT_MARKDOWN);
+    setSettings(DEFAULT_SETTINGS);
+  };
 
   useEffect(() => {
     if (!isPreferencesOpen) {
@@ -143,23 +149,20 @@ function App() {
   }, [isPreferencesOpen]);
 
   return (
-    <main
-      className={`app-shell theme-${settings.theme} ${
-        isReaderFullscreen ? "is-reader-fullscreen" : ""
-      }`}
-    >
+    <main className={`app-shell theme-${settings.theme} ${isReaderOpen ? "is-reader-open" : ""}`}>
       <header className="topbar">
-        <div>
-          <p className="eyebrow">MVP phase 1</p>
-          <h1>Markdown Reader</h1>
-          <p className="topbar-copy">
-            Paste Markdown on the left. Read it on the right with settings that
-            persist locally.
-          </p>
-        </div>
         <div className="status-group" aria-label="document status">
-          <div className="status-pill">{wordCount} words</div>
-          <div className="status-pill">{readingMinutes} min read</div>
+          {isReaderOpen ? (
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Close reader view"
+              onClick={() => setIsReaderOpen(false)}
+            >
+              ×
+            </button>
+          ) : null}
+          <div className="status-pill">{readingSummary}</div>
           <button
             className="ghost-button"
             type="button"
@@ -167,35 +170,20 @@ function App() {
           >
             Preferences
           </button>
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => setIsReaderFullscreen((current) => !current)}
-          >
-            {isReaderFullscreen ? "Exit Fullscreen" : "Reader Fullscreen"}
-          </button>
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => {
-              setSource(DEFAULT_MARKDOWN);
-              setSettings(DEFAULT_SETTINGS);
-            }}
-          >
-            Reset
-          </button>
+          {!isReaderOpen ? (
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => setIsReaderOpen(true)}
+            >
+              Reader View
+            </button>
+          ) : null}
         </div>
       </header>
 
       <section className="workspace">
-        <aside className="source-pane">
-          <div className="pane-header">
-            <div>
-              <h2>Source</h2>
-              <span>Raw Markdown stays editable here.</span>
-            </div>
-          </div>
-
+        {!isReaderOpen ? (
           <label className="source-editor-shell">
             <span className="sr-only">Markdown source</span>
             <textarea
@@ -206,9 +194,7 @@ function App() {
               placeholder="Paste Markdown here"
             />
           </label>
-        </aside>
-
-        <section className="reader-pane">
+        ) : (
           <div className="reader-card">
             <article
               className={`reader-preview font-${settings.fontFamily}`}
@@ -221,7 +207,7 @@ function App() {
               dangerouslySetInnerHTML={{ __html: renderedHtml }}
             />
           </div>
-        </section>
+        )}
       </section>
 
       {isPreferencesOpen ? (
@@ -238,10 +224,7 @@ function App() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="modal-header">
-              <div>
-                <p className="eyebrow">Reader settings</p>
-                <h2 id="preferences-title">Preferences</h2>
-              </div>
+              <h2 id="preferences-title">Preferences</h2>
               <button
                 className="ghost-button"
                 type="button"
@@ -325,6 +308,12 @@ function App() {
                   <option value="dark">Dark</option>
                 </select>
               </label>
+
+              <div className="modal-actions">
+                <button className="ghost-button" type="button" onClick={handleReset}>
+                  Reset
+                </button>
+              </div>
             </div>
           </section>
         </div>

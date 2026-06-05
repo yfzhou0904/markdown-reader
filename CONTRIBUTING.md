@@ -1,58 +1,32 @@
 # Contributing
 
-This project is intentionally narrow. Keep changes aligned with the MVP.
+Start with [`docs/`](./docs/). It is the project reference point:
 
-## Current phase
+- [`docs/README.md`](./docs/README.md) explains how docs should be written
+- [`docs/mvp.md`](./docs/mvp.md) captures product scope and open gaps
+- [`docs/architecture.md`](./docs/architecture.md) describes the intended app shape
 
-Active target: `Phase 1 / MVP`
+When code and planning docs differ, treat shipped behavior in `src/` and `src-tauri/` as the source of truth, then update `docs/` if the change affects scope or architecture.
 
-Before broadening scope, verify that a change improves one of these jobs:
+## Project shape
 
-- get Markdown into the app quickly
-- render it as comfortable long-form reading
-- let the reader tune presentation
-- preserve local state between sessions
+- `src/`: React reader UI, Markdown render pipeline, and local persistence
+- `src-tauri/`: Tauri desktop shell
+- `docs/`: concise product and architecture notes
 
-## Working rules
+## Contribution rules
 
-- Prefer proven libraries over custom infrastructure.
-- Keep the product reading-first, not editor-first.
-- Default to offline-safe choices.
-- Treat raw HTML inside Markdown as untrusted.
-- Keep the UI sparse and calm.
+- Keep the app reading-first, offline-safe, and intentionally narrow.
+- Prefer small changes over broad refactors.
+- Treat Markdown as untrusted input; keep sanitization intact.
+- Do not add HTTP endpoints or anything that could expose local files, env vars, or credentials.
+- Update `docs/` when behavior, scope, or architecture changes.
 
-## Definition of done for MVP changes
+## Validation
 
-A change is complete when:
+- Install: `pnpm install`
+- Frontend dev: `pnpm dev`
+- Frontend build: `pnpm build`
+- Desktop app: `pnpm tauri dev`
 
-- behavior works end to end
-- the code fits the chosen app architecture
-- obvious regressions are tested
-- docs are updated when scope or decisions changed
-
-## Testing expectations
-
-For MVP work, test depth should scale with risk:
-
-- UI preference changes: verify persistence across relaunch
-- Markdown rendering changes: test representative fixtures
-- file/open or clipboard flows: verify with realistic local inputs
-- platform integrations: manual verification on macOS
-
-## Scope control
-
-Open a design note before introducing:
-
-- new storage systems
-- sync features
-- plugin hooks
-- alternate editor modes
-- embedded network services
-
-These are likely post-MVP concerns.
-
-## Security constraints
-
-- No backend is required for MVP.
-- Do not expose local files or environment data through HTTP endpoints.
-- Sanitize rendered output before presenting it in the reader surface.
+For UI and rendering changes, manually verify Markdown rendering, settings persistence, and reset/fullscreen flows.

@@ -120,32 +120,9 @@ textarea {
 
 .topbar {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 16px;
-}
-
-.eyebrow {
-  margin: 0 0 6px;
-  font-size: 12px;
-  line-height: 1.4;
-  text-transform: uppercase;
-  color: var(--panel-muted);
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.1;
-  font-weight: 650;
-}
-
-.topbar-copy {
-  margin: 10px 0 0;
-  max-width: 52ch;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--panel-muted);
 }
 
 .status-group {
@@ -153,11 +130,14 @@ textarea {
   align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
+  width: 100%;
   gap: 10px;
 }
 
 .status-pill,
-.ghost-button {
+.ghost-button,
+.primary-button,
+.icon-button {
   min-height: 40px;
   padding: 10px 14px;
   border: 1px solid var(--panel-border);
@@ -178,65 +158,32 @@ textarea {
   appearance: none;
 }
 
+.primary-button {
+  appearance: none;
+  background: var(--panel-text);
+  color: var(--reader-bg);
+}
+
+.icon-button {
+  appearance: none;
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 24px;
+  line-height: 1;
+  margin-right: auto;
+}
+
 .workspace {
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(320px, 0.92fr) minmax(620px, 1.3fr);
-  gap: 20px;
-}
-
-.is-reader-fullscreen {
-  padding: 16px;
-}
-
-.is-reader-fullscreen .topbar-copy,
-.is-reader-fullscreen .source-pane {
-  display: none;
-}
-
-.is-reader-fullscreen .workspace {
-  grid-template-columns: 1fr;
-}
-
-.is-reader-fullscreen .reader-pane {
-  gap: 10px;
-}
-
-.source-pane,
-.reader-pane {
-  min-height: 0;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.pane-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.pane-header-stack {
-  gap: 16px;
-}
-
-.pane-header h2 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.pane-header span {
-  display: inline-block;
-  margin-top: 2px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--panel-muted);
 }
 
 .source-editor-shell,
 .reader-card {
+  width: 100%;
   min-height: 0;
   border: 1px solid var(--panel-border);
   border-radius: 8px;
@@ -260,6 +207,7 @@ textarea {
   background: transparent;
   color: var(--panel-text);
   line-height: 1.65;
+  font-size: 15px;
   font-family:
     "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
@@ -269,49 +217,6 @@ textarea {
   color: var(--panel-muted);
 }
 
-.reader-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.control-pill {
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  background: var(--panel-bg);
-  color: var(--panel-text);
-}
-
-.control-pill span {
-  margin: 0;
-  color: var(--panel-muted);
-}
-
-.control-pill select {
-  min-width: 76px;
-  appearance: none;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: inherit;
-}
-
-.control-range input {
-  width: 112px;
-}
-
-.control-range strong {
-  min-width: 58px;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: right;
-}
-
 .reader-card {
   flex: 1;
   min-height: 0;
@@ -319,9 +224,14 @@ textarea {
   background: var(--reader-bg);
 }
 
+.is-reader-open {
+  padding: 16px;
+}
+
 .reader-preview {
   width: 100%;
   margin: 0 auto;
+  max-width: 860px;
   padding: 40px 36px 56px;
   color: var(--reader-text);
   font-size: var(--reader-font-size);
@@ -424,6 +334,12 @@ textarea {
   padding: 20px;
 }
 
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
 .control-row {
   display: grid;
   grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
@@ -517,20 +433,13 @@ textarea {
   padding-left: 1.3em;
 }
 
-@media (max-width: 1180px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 820px) {
   .app-shell {
     padding: 16px;
   }
 
-  .topbar,
-  .pane-header {
-    flex-direction: column;
+  .topbar {
+    justify-content: stretch;
   }
 
   .modal-header,
@@ -538,22 +447,16 @@ textarea {
     justify-content: flex-start;
   }
 
+  .status-group {
+    width: 100%;
+  }
+
+  .icon-button {
+    margin-right: 0;
+  }
+
   .reader-preview {
     padding: 28px 20px 40px;
-  }
-
-  .control-pill {
-    flex-wrap: wrap;
-    border-radius: 16px;
-  }
-
-  .control-range {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .control-range input {
-    width: min(100%, 180px);
   }
 
   .control-row {
