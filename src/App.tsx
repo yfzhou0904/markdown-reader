@@ -10,7 +10,6 @@ type ReaderSettings = {
   fontFamily: FontFamily;
   fontSize: number;
   lineHeight: number;
-  contentWidth: number;
   theme: Theme;
 };
 
@@ -40,7 +39,6 @@ const preferences = {
   fontFamily: "serif",
   fontSize: 19,
   lineHeight: 1.75,
-  contentWidth: 720,
   theme: "paper",
 };
 \`\`\`
@@ -50,7 +48,6 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   fontFamily: "serif",
   fontSize: 19,
   lineHeight: 1.75,
-  contentWidth: 720,
   theme: "paper",
 };
 
@@ -87,10 +84,6 @@ function readStoredSettings(): ReaderSettings {
         typeof parsed.lineHeight === "number"
           ? parsed.lineHeight
           : DEFAULT_SETTINGS.lineHeight,
-      contentWidth:
-        typeof parsed.contentWidth === "number"
-          ? parsed.contentWidth
-          : DEFAULT_SETTINGS.contentWidth,
       theme:
         parsed.theme === "dark" || parsed.theme === "sepia"
           ? parsed.theme
@@ -230,9 +223,6 @@ function App() {
                 {
                   "--reader-font-size": `${settings.fontSize}px`,
                   "--reader-line-height": settings.lineHeight,
-                  "--reader-width": isReaderFullscreen
-                    ? "100%"
-                    : `${settings.contentWidth}px`,
                 } as CSSProperties
               }
               dangerouslySetInnerHTML={{ __html: renderedHtml }}
@@ -323,26 +313,6 @@ function App() {
                     }
                   />
                   <strong>{settings.lineHeight.toFixed(2)}</strong>
-                </div>
-              </label>
-
-              <label className="control-row">
-                <span>Content width</span>
-                <div className="slider-control">
-                  <input
-                    type="range"
-                    min="560"
-                    max="920"
-                    step="20"
-                    value={settings.contentWidth}
-                    onChange={(event) =>
-                      setSettings((current) => ({
-                        ...current,
-                        contentWidth: Number(event.target.value),
-                      }))
-                    }
-                  />
-                  <strong>{settings.contentWidth}px</strong>
                 </div>
               </label>
 
