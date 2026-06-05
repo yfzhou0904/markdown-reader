@@ -1,62 +1,288 @@
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import DOMPurify from "dompurify";
+import MarkdownIt from "markdown-it";
 import "./App.css";
 
+type FontFamily = "serif" | "sans" | "mono";
+type Theme = "paper" | "dark" | "sepia";
+
+type ReaderSettings = {
+  fontFamily: FontFamily;
+  fontSize: number;
+  lineHeight: number;
+  contentWidth: number;
+  theme: Theme;
+};
+
+const STORAGE_KEYS = {
+  markdown: "markdown-reader.document",
+  settings: "markdown-reader.settings",
+} as const;
+
+const DEFAULT_MARKDOWN = `# Markdown Reader
+
+Paste raw Markdown here and read it in a calmer surface.
+
+## What this MVP does
+
+- keeps your current draft in local storage
+- remembers typography and theme settings
+- renders Markdown as a reading document rather than a developer preview
+
+> The source stays visible when you need it. The reader stays comfortable when you don't.
+
+### Reading notes
+
+This first pass is intentionally narrow. It is the app shell you can build the macOS product around: input on the left, reader on the right, and enough settings to make long reports readable.
+
+\`\`\`ts
+const preferences = {
+  fontFamily: "serif",
+  fontSize: 19,
+  lineHeight: 1.75,
+  contentWidth: 720,
+  theme: "paper",
+};
+\`\`\`
+`;
+
+const DEFAULT_SETTINGS: ReaderSettings = {
+  fontFamily: "serif",
+  fontSize: 19,
+  lineHeight: 1.75,
+  contentWidth: 720,
+  theme: "paper",
+};
+
+const markdown = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+  typographer: true,
+});
+
+function readStoredMarkdown(): string {
+  const stored = window.localStorage.getItem(STORAGE_KEYS.markdown);
+  return stored && stored.trim().length > 0 ? stored : DEFAULT_MARKDOWN;
+}
+
+function readStoredSettings(): ReaderSettings {
+  const stored = window.localStorage.getItem(STORAGE_KEYS.settings);
+
+  if (!stored) {
+    return DEFAULT_SETTINGS;
+  }
+
+  try {
+    const parsed = JSON.parse(stored) as Partial<ReaderSettings>;
+
+    return {
+      fontFamily:
+        parsed.fontFamily === "sans" || parsed.fontFamily === "mono"
+          ? parsed.fontFamily
+          : "serif",
+      fontSize:
+        typeof parsed.fontSize === "number" ? parsed.fontSize : DEFAULT_SETTINGS.fontSize,
+      lineHeight:
+        typeof parsed.lineHeight === "number"
+          ? parsed.lineHeight
+          : DEFAULT_SETTINGS.lineHeight,
+      contentWidth:
+        typeof parsed.contentWidth === "number"
+          ? parsed.contentWidth
+          : DEFAULT_SETTINGS.contentWidth,
+      theme:
+        parsed.theme === "dark" || parsed.theme === "sepia"
+          ? parsed.theme
+          : "paper",
+    };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
 function App() {
+  const [source, setSource] = useState<string>(() => readStoredMarkdown());
+  const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEYS.markdown, source);
+  }, [source]);
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+  }, [settings]);
+
+  const renderedHtml = useMemo(() => {
+    const dirtyHtml = markdown.render(source);
+    return DOMPurify.sanitize(dirtyHtml);
+  }, [source]);
+
+  const wordCount = useMemo(() => {
+    const words = source.trim().match(/\S+/g);
+    return words ? words.length : 0;
+  }, [source]);
+
+  const readingMinutes = Math.max(1, Math.round(wordCount / 220));
+
   return (
-    <main className="app-shell">
+    <main className={`app-shell theme-${settings.theme}`}>
       <header className="topbar">
         <div>
-          <p className="eyebrow">Phase 1 scaffold</p>
+          <p className="eyebrow">MVP phase 1</p>
           <h1>Markdown Reader</h1>
+          <p className="topbar-copy">
+            Paste Markdown on the left. Read it on the right with settings that
+            persist locally.
+          </p>
         </div>
-        <div className="status-pill">Offline-first macOS app</div>
+        <div className="status-group" aria-label="document status">
+          <div className="status-pill">{wordCount} words</div>
+          <div className="status-pill">{readingMinutes} min read</div>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => {
+              setSource(DEFAULT_MARKDOWN);
+              setSettings(DEFAULT_SETTINGS);
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </header>
 
       <section className="workspace">
         <aside className="source-pane">
           <div className="pane-header">
-            <h2>Source</h2>
-            <span>Paste or open Markdown</span>
+            <div>
+              <h2>Source</h2>
+              <span>Raw Markdown stays editable here.</span>
+            </div>
           </div>
-          <div className="placeholder-panel">
-            <p>
-              MVP implementation starts here: document input, local draft
-              persistence, and file-open workflows.
-            </p>
-          </div>
+
+          <label className="source-editor-shell">
+            <span className="sr-only">Markdown source</span>
+            <textarea
+              className="source-editor"
+              value={source}
+              onChange={(event) => setSource(event.target.value)}
+              spellCheck={false}
+              placeholder="Paste Markdown here"
+            />
+          </label>
         </aside>
 
         <section className="reader-pane">
-          <div className="pane-header">
-            <h2>Reader</h2>
-            <span>Typography-first rendering surface</span>
+          <div className="pane-header pane-header-stack">
+            <div>
+              <h2>Reader</h2>
+              <span>Typography-first rendering surface.</span>
+            </div>
+
+            <div className="reader-controls" aria-label="reader settings">
+              <label className="control-pill">
+                <span>Font</span>
+                <select
+                  value={settings.fontFamily}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      fontFamily: event.target.value as FontFamily,
+                    }))
+                  }
+                >
+                  <option value="serif">Serif</option>
+                  <option value="sans">Sans</option>
+                  <option value="mono">Mono</option>
+                </select>
+              </label>
+
+              <label className="control-pill control-range">
+                <span>Size</span>
+                <input
+                  type="range"
+                  min="16"
+                  max="28"
+                  step="1"
+                  value={settings.fontSize}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      fontSize: Number(event.target.value),
+                    }))
+                  }
+                />
+                <strong>{settings.fontSize}px</strong>
+              </label>
+
+              <label className="control-pill control-range">
+                <span>Line</span>
+                <input
+                  type="range"
+                  min="1.4"
+                  max="2.1"
+                  step="0.05"
+                  value={settings.lineHeight}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      lineHeight: Number(event.target.value),
+                    }))
+                  }
+                />
+                <strong>{settings.lineHeight.toFixed(2)}</strong>
+              </label>
+
+              <label className="control-pill control-range">
+                <span>Width</span>
+                <input
+                  type="range"
+                  min="560"
+                  max="920"
+                  step="20"
+                  value={settings.contentWidth}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      contentWidth: Number(event.target.value),
+                    }))
+                  }
+                />
+                <strong>{settings.contentWidth}px</strong>
+              </label>
+
+              <label className="control-pill">
+                <span>Theme</span>
+                <select
+                  value={settings.theme}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      theme: event.target.value as Theme,
+                    }))
+                  }
+                >
+                  <option value="paper">Paper</option>
+                  <option value="sepia">Sepia</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           <div className="reader-card">
-            <div className="reader-controls">
-              <span>Serif</span>
-              <span>18px</span>
-              <span>1.7 line height</span>
-              <span>720px width</span>
-              <span>Sepia</span>
-            </div>
-
-            <article className="reader-preview">
-              <h3>Reader experience target</h3>
-              <p>
-                This scaffold is deliberately light on behavior. Its job is to
-                establish the app shell, package layout, and desktop container
-                so the MVP can be implemented without carrying template code
-                forward.
-              </p>
-              <p>
-                The next implementation pass should replace this placeholder with
-                a real Markdown pipeline, persisted reader preferences, and a
-                reading surface tuned for long-form reports.
-              </p>
-              <blockquote>
-                Reading-first, not editor-first.
-              </blockquote>
-            </article>
+            <article
+              className={`reader-preview font-${settings.fontFamily}`}
+              style={
+                {
+                  "--reader-font-size": `${settings.fontSize}px`,
+                  "--reader-line-height": settings.lineHeight,
+                  "--reader-width": `${settings.contentWidth}px`,
+                } as CSSProperties
+              }
+              dangerouslySetInnerHTML={{ __html: renderedHtml }}
+            />
           </div>
         </section>
       </section>
