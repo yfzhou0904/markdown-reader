@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Document body: top-right corner cut for fold (path instead of rect) -->
+  <path d="M 215,72 L 601,72 L 881,352 L 881,900 A 72,72 0 0,1 809,972 L 215,972 A 72,72 0 0,1 143,900 L 143,144 A 72,72 0 0,1 215,72 Z" fill="#251f18"/>
+
+  <!-- Folded corner flap — outer corner rounded to match document -->
+  <path d="M 601,72 L 809,72 A 72,72 0 0,1 881,144 L 881,352 Z" fill="#fbf6ed"/>
+
+  <!-- Hash "#" — bold, vertically centered on document (midpoint y=522) -->
+  <rect x="420" y="370" width="56" height="300" rx="28" fill="#fbf6ed"/>
+  <rect x="548" y="370" width="56" height="300" rx="28" fill="#fbf6ed"/>
+  <rect x="380" y="436" width="264" height="54" rx="27" fill="#fbf6ed"/>
+  <rect x="380" y="576" width="264" height="54" rx="27" fill="#fbf6ed"/>
+</svg>
