@@ -209,34 +209,39 @@ function App() {
       </header>
 
       <section className="workspace">
-        {!isReaderOpen ? (
-          <label className="source-editor-shell">
-            <span className="sr-only">Markdown source</span>
-            <textarea
-              className="source-editor"
-              value={source}
-              onChange={(event) => setSource(event.target.value)}
-              spellCheck={false}
-              placeholder="Paste Markdown here"
-            />
-          </label>
-        ) : (
-          <div className="reader-card">
-            <article
-              className={`reader-preview font-${settings.fontFamily}`}
-              style={
-                {
-                  "--reader-font-size": `${settings.fontSize}px`,
-                  "--reader-line-height": settings.lineHeight,
-                } as CSSProperties
-              }
-            >
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {source}
-              </ReactMarkdown>
-            </article>
-          </div>
-        )}
+        <label
+          className="source-editor-shell"
+          aria-hidden={isReaderOpen}
+          inert={isReaderOpen}
+        >
+          <span className="sr-only">Markdown source</span>
+          <textarea
+            className="source-editor"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+            spellCheck={false}
+            placeholder="Paste Markdown here"
+          />
+        </label>
+        <div
+          className="reader-card"
+          aria-hidden={!isReaderOpen}
+          inert={!isReaderOpen}
+        >
+          <article
+            className={`reader-preview font-${settings.fontFamily}`}
+            style={
+              {
+                "--reader-font-size": `${settings.fontSize}px`,
+                "--reader-line-height": settings.lineHeight,
+              } as CSSProperties
+            }
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {source}
+            </ReactMarkdown>
+          </article>
+        </div>
       </section>
 
       {isPreferencesOpen ? (

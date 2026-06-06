@@ -40,6 +40,18 @@ input[type="range"] {
   cursor: pointer;
 }
 
+.primary-button,
+.ghost-button,
+.icon-button {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 textarea {
   resize: none;
 }
@@ -70,6 +82,7 @@ textarea {
   --reader-rule: #d6d6d6;
   height: 100vh;
   padding: 24px;
+  transition: padding 0.35s ease;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 20px;
@@ -162,6 +175,17 @@ textarea {
   appearance: none;
   background: var(--panel-text);
   color: var(--reader-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.primary-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.primary-button:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .primary-button-left {
@@ -180,15 +204,32 @@ textarea {
   margin-right: auto;
 }
 
+.ghost-button:hover {
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.ghost-button:active {
+  transform: scale(0.97);
+}
+
+.icon-button:hover {
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+}
+
 .workspace {
   min-height: 0;
-  display: flex;
+  position: relative;
 }
 
 .source-editor-shell,
 .reader-card {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  min-height: 0;
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   background: var(--panel-bg);
@@ -196,7 +237,6 @@ textarea {
 }
 
 .source-editor-shell {
-  flex: 1;
   display: flex;
   overflow: hidden;
 }
@@ -222,20 +262,23 @@ textarea {
 }
 
 .reader-card {
-  flex: 1;
-  min-height: 0;
   overflow: auto;
   background: var(--reader-bg);
+  clip-path: inset(0 100% 100% 0 round 8px);
+  transition: clip-path 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 
 .is-reader-open {
   padding: 16px;
 }
 
-.is-reader-open .workspace,
-.is-reader-open .reader-card,
+.is-reader-open .reader-card {
+  clip-path: inset(0 0% 0% 0 round 8px);
+  pointer-events: auto;
+}
+
 .is-reader-open .reader-preview {
-  width: 100%;
   max-width: none;
 }
 
@@ -312,6 +355,7 @@ textarea {
   place-items: center;
   padding: 24px;
   background: rgba(0, 0, 0, 0.36);
+  animation: backdropFadeIn 0.2s ease forwards;
 }
 
 .preferences-modal {
@@ -323,6 +367,7 @@ textarea {
   background: var(--modal-bg);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
   color: var(--panel-text);
+  animation: modalScaleIn 0.25s ease forwards;
 }
 
 .modal-header {
@@ -381,6 +426,16 @@ textarea {
 .slider-control strong {
   min-width: 64px;
   text-align: right;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .reader-preview a {
