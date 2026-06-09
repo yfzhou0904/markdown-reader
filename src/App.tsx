@@ -113,13 +113,6 @@ function App() {
     window.localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [settings]);
 
-  const wordCount = useMemo(() => {
-    const words = source.trim().match(/\S+/g);
-    return words ? words.length : 0;
-  }, [source]);
-  const readingMinutes = Math.max(1, Math.round(wordCount / 220));
-  const readingSummary = `${wordCount} words • ${readingMinutes} min read`;
-
   const markdownComponents = useMemo(
     () =>
       ({
@@ -193,38 +186,39 @@ function App() {
 
   return (
     <main className={`app-shell theme-${settings.theme} ${isReaderOpen ? "is-reader-open" : ""}`}>
-      <header className="topbar">
-        <div className="status-group" aria-label="document status">
-          {isReaderOpen ? (
-            <button
-              className="icon-button"
-              type="button"
-              aria-label="Close reader view"
-              onClick={() => setIsReaderOpen(false)}
-            >
-              ×
-            </button>
-          ) : (
-            <button
-              className="primary-button primary-button-left"
-              type="button"
-              onClick={() => setIsReaderOpen(true)}
-            >
-              Reader View
-            </button>
-          )}
-          <div className="status-pill">{readingSummary}</div>
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => setIsPreferencesOpen(true)}
-          >
-            Preferences
-          </button>
-        </div>
-      </header>
-
       <section className="workspace">
+        <div className="top-reveal-zone" aria-hidden="true" />
+        <div className="floating-controls-frame">
+          <div className="floating-controls" aria-label="document controls">
+            {isReaderOpen ? (
+              <button
+                className="floating-action-button"
+                type="button"
+                aria-label="Close reader view"
+                onClick={() => setIsReaderOpen(false)}
+              >
+                ×
+              </button>
+            ) : (
+              <button
+                className="floating-action-button"
+                type="button"
+                onClick={() => setIsReaderOpen(true)}
+              >
+                Reader View
+              </button>
+            )}
+            <button
+              className="floating-icon-button"
+              type="button"
+              aria-label="Open preferences"
+              onClick={() => setIsPreferencesOpen(true)}
+            >
+              <span aria-hidden="true">⚙</span>
+            </button>
+          </div>
+        </div>
+
         <label
           className="source-editor-shell"
           aria-hidden={isReaderOpen}
