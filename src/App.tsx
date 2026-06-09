@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ComponentProps } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
@@ -103,6 +103,7 @@ function App() {
   const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const sourceEditorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.markdown, source);
@@ -158,22 +159,37 @@ function App() {
   };
 
   useEffect(() => {
-    if (!isPreferencesOpen) {
-      return;
-    }
-
-    const handleEscape = (event: KeyboardEvent) => {
+    const handleKeydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsPreferencesOpen(false);
+        if (isPreferencesOpen) {
+          setIsPreferencesOpen(false);
+          return;
+        }
+
+        if (isReaderOpen) {
+          setIsReaderOpen(false);
+        }
+      }
+
+      if (
+        event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key === "Enter" &&
+        document.activeElement === sourceEditorRef.current
+      ) {
+        event.preventDefault();
+        setIsReaderOpen(true);
       }
     };
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener("keydown", handleKeydown);
 
     return () => {
-      window.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("keydown", handleKeydown);
     };
-  }, [isPreferencesOpen]);
+  }, [isPreferencesOpen, isReaderOpen]);
 
   return (
     <main className={`app-shell theme-${settings.theme} ${isReaderOpen ? "is-reader-open" : ""}`}>
@@ -216,6 +232,7 @@ function App() {
         >
           <span className="sr-only">Markdown source</span>
           <textarea
+            ref={sourceEditorRef}
             className="source-editor"
             value={source}
             onChange={(event) => setSource(event.target.value)}
