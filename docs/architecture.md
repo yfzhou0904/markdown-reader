@@ -2,74 +2,60 @@
 
 ## App shape
 
-The app should stay simple:
+The app stays simple:
 
-- `frontend`: React UI for input, reader surface, and controls
-- `desktop shell`: Tauri for packaging and native file integration
-- `render pipeline`: Markdown parser + sanitizer + syntax highlighter
-- `local state`: preferences and draft persistence
+- `frontend`: React UI for source input, reader surface, preferences, and reader mode
+- `desktop shell`: Tauri for packaging plus window-specific native behavior
+- `render pipeline`: `react-markdown` + `remark-gfm` with a Mermaid override
+- `local state`: draft and reader preferences in browser storage
 
-## Recommended structure
-
-```text
-markdown-reader/
-  README.md
-  CONTRIBUTING.md
-  docs/
-    architecture.md
-    mvp.md
-  src/
-    App.tsx
-    App.css
-    main.tsx
-  src-tauri/
-```
+Integration points:
+- [src/App.tsx](../src/App.tsx)
+- [src/Mermaid.tsx](../src/Mermaid.tsx)
+- [src/App.css](../src/App.css)
+- [src-tauri/src/lib.rs](../src-tauri/src/lib.rs)
+- [src-tauri/tauri.conf.json](../src-tauri/tauri.conf.json)
 
 ## State model
 
-Keep state separated by concern:
+- `document state`: one current Markdown draft string
+- `reader settings`: theme, font family, font size, and line height
+- `view state`: whether reader mode or preferences modal is open
+- `derived state`: word count, estimated reading time, rendered Mermaid output
 
-- `document state`: current Markdown source, open file metadata, last draft
-- `reader settings`: theme, font family, font size, line height, width
-- `derived render state`: rendered HTML and parse errors if any
-
-Reader preferences should persist independently from any specific document.
+Document and settings persist independently under stable local-storage keys.
 
 ## Rendering pipeline
 
-Preferred order:
+The document is rendered directly from Markdown in the React tree rather than through a prebuilt HTML string.
 
-1. ingest raw Markdown
-2. parse to HTML
-3. sanitize output
-4. apply syntax highlighting
-5. render inside the reader surface
+- `react-markdown` handles Markdown rendering
+- `remark-gfm` adds tables, task lists, and related GitHub-flavored Markdown features
+- external links get `target="_blank"` and `rel="noopener noreferrer"`
+- Mermaid fences are intercepted and rendered client-side with strict Mermaid security settings
+- invalid Mermaid falls back to showing the original code block
 
-The app should assume pasted Markdown may contain raw HTML and handle it defensively.
+The app treats Markdown as untrusted input by not enabling raw HTML rendering.
 
 ## UI model
 
-Phase 1 should favor a simple shell:
+- default mode is a two-pane shell: source on the left, reader on the right
+- reader mode turns the preview into the primary surface without destroying the draft
+- preferences live in a modal instead of an always-visible sidebar
+- controls stay intentionally narrow: font family, font size, line height, theme, and reset
 
-- source input area
-- reader preview area
-- compact control bar for presentation settings
-
-The visual emphasis should stay on the reader pane, even if the source pane is visible.
+The product decision is to optimize for reading comfort, not authoring power.
 
 ## Persistence model
 
-For MVP, local persistence is enough:
-
-- store reader settings under a stable app key
-- store the last unsaved Markdown draft
-- optionally store recent file paths later
-
-Whether this lives in frontend storage or a Tauri-side store can be decided during implementation.
+- the frontend stores the current draft and settings in local storage
+- the Tauri shell restores native window size and position across relaunches
+- on macOS, the frontend can push theme changes into the native window background so the transparent title bar tracks the active reader theme
 
 ## Security
 
 - no runtime backend
 - no remote fetch requirement for core rendering
-- sanitize untrusted Markdown output
+- do not enable raw HTML rendering from Markdown
+- Mermaid runs with `securityLevel: "strict"`
 - avoid exposing arbitrary local file contents through any embedded HTTP mechanism

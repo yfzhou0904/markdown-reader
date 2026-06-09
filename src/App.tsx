@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ComponentProps } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
@@ -68,6 +69,12 @@ function getNextFontSize(current: number, delta: number): number {
     Math.max(FONT_SIZE_MIN, current + delta * FONT_SIZE_STEP),
   );
 }
+
+const MACOS_THEME_WINDOW_COLORS: Record<Theme, { red: number; green: number; blue: number }> = {
+  light: { red: 255, green: 255, blue: 255 },
+  paper: { red: 246, green: 241, blue: 232 },
+  dark: { red: 23, green: 23, blue: 24 },
+};
 
 function readStoredMarkdown(): string {
   const stored = window.localStorage.getItem(STORAGE_KEYS.markdown);
@@ -140,6 +147,13 @@ function App() {
     };
   }, [isReaderOpen]);
 
+  useEffect(() => {
+    const { red, green, blue } = MACOS_THEME_WINDOW_COLORS[settings.theme];
+
+    void invoke("sync_window_theme", { red, green, blue }).catch(() => {
+      // Ignore on non-Tauri/web contexts and unsupported platforms.
+    });
+  }, [settings.theme]);
   const markdownComponents = useMemo(
     () =>
       ({
