@@ -115,6 +115,20 @@ function App() {
     window.localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [settings]);
 
+  useEffect(() => {
+    if (isReaderOpen) {
+      return;
+    }
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      sourceEditorRef.current?.focus();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+    };
+  }, [isReaderOpen]);
+
   const markdownComponents = useMemo(
     () =>
       ({
