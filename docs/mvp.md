@@ -42,6 +42,7 @@ As a user reading long AI-generated or hand-written Markdown documents, I want t
 
 - choose font family from a small curated set
 - adjust font size
+- support keyboard shortcuts for font size in reader view
 - adjust line height
 - adjust content width
 - switch among light, dark, and sepia themes

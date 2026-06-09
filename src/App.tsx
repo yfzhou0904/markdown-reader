@@ -14,6 +14,10 @@ type ReaderSettings = {
   theme: Theme;
 };
 
+const FONT_SIZE_MIN = 16;
+const FONT_SIZE_MAX = 28;
+const FONT_SIZE_STEP = 1;
+
 const STORAGE_KEYS = {
   markdown: "markdown-reader.document",
   settings: "markdown-reader.settings",
@@ -57,6 +61,13 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   lineHeight: 1.75,
   theme: "paper",
 };
+
+function getNextFontSize(current: number, delta: number): number {
+  return Math.min(
+    FONT_SIZE_MAX,
+    Math.max(FONT_SIZE_MIN, current + delta * FONT_SIZE_STEP),
+  );
+}
 
 function readStoredMarkdown(): string {
   const stored = window.localStorage.getItem(STORAGE_KEYS.markdown);
@@ -191,6 +202,28 @@ function App() {
         event.preventDefault();
         setIsReaderOpen(true);
       }
+
+      const isMetaOnlyModifier = event.metaKey && !event.ctrlKey && !event.altKey;
+      const isIncreaseFontKey =
+        event.key === "+" || event.key === "=" || event.code === "NumpadAdd";
+      const isDecreaseFontKey =
+        event.key === "-" || event.key === "_" || event.code === "NumpadSubtract";
+
+      if (isReaderOpen && !isPreferencesOpen && isMetaOnlyModifier && isIncreaseFontKey) {
+        event.preventDefault();
+        setSettings((current) => ({
+          ...current,
+          fontSize: getNextFontSize(current.fontSize, 1),
+        }));
+      }
+
+      if (isReaderOpen && !isPreferencesOpen && isMetaOnlyModifier && isDecreaseFontKey) {
+        event.preventDefault();
+        setSettings((current) => ({
+          ...current,
+          fontSize: getNextFontSize(current.fontSize, -1),
+        }));
+      }
     };
 
     window.addEventListener("keydown", handleKeydown);
@@ -319,9 +352,9 @@ function App() {
                 <div className="slider-control">
                   <input
                     type="range"
-                    min="16"
-                    max="28"
-                    step="1"
+                    min={FONT_SIZE_MIN}
+                    max={FONT_SIZE_MAX}
+                    step={FONT_SIZE_STEP}
                     value={settings.fontSize}
                     onChange={(event) =>
                       setSettings((current) => ({
