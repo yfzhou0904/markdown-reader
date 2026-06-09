@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("./assets/fonts/AtkinsonHyperlegibleNextVF-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color: #181512;
   background: #f4efe6;
@@ -317,6 +325,10 @@ textarea {
   font-family:
     "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+}
+
+.font-atkinson-next {
+  font-family: "Atkinson Hyperlegible Next", "Segoe UI", sans-serif;
 }
 
 .reader-preview > :first-child {

@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import "./App.css";
 import { Mermaid } from "./Mermaid";
 
-type FontFamily = "serif" | "sans" | "mono";
+type FontFamily = "serif" | "sans" | "mono" | "atkinson-next";
 type Theme = "light" | "paper" | "dark";
 
 type ReaderSettings = {
@@ -75,7 +75,9 @@ function readStoredSettings(): ReaderSettings {
 
     return {
       fontFamily:
-        parsed.fontFamily === "sans" || parsed.fontFamily === "mono"
+        parsed.fontFamily === "sans" ||
+        parsed.fontFamily === "mono" ||
+        parsed.fontFamily === "atkinson-next"
           ? parsed.fontFamily
           : "serif",
       fontSize:
@@ -294,6 +296,7 @@ function App() {
                   <option value="serif">Serif</option>
                   <option value="sans">Sans</option>
                   <option value="mono">Mono</option>
+                  <option value="atkinson-next">Atkinson Next</option>
                 </select>
               </label>
 
