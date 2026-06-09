@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ComponentProps } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
 import { Mermaid } from "./Mermaid";
 
-type FontFamily = "serif" | "sans" | "mono";
+type FontFamily = "serif" | "sans" | "mono" | "atkinson-next";
 type Theme = "light" | "paper" | "dark";
 
 type ReaderSettings = {
@@ -75,7 +75,9 @@ function readStoredSettings(): ReaderSettings {
 
     return {
       fontFamily:
-        parsed.fontFamily === "sans" || parsed.fontFamily === "mono"
+        parsed.fontFamily === "sans" ||
+        parsed.fontFamily === "mono" ||
+        parsed.fontFamily === "atkinson-next"
           ? parsed.fontFamily
           : "serif",
       fontSize:
@@ -103,6 +105,7 @@ function App() {
   const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const sourceEditorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.markdown, source);
@@ -111,13 +114,6 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [settings]);
-
-  const wordCount = useMemo(() => {
-    const words = source.trim().match(/\S+/g);
-    return words ? words.length : 0;
-  }, [source]);
-  const readingMinutes = Math.max(1, Math.round(wordCount / 220));
-  const readingSummary = `${wordCount} words • ${readingMinutes} min read`;
 
   const markdownComponents = useMemo(
     () =>
@@ -158,57 +154,73 @@ function App() {
   };
 
   useEffect(() => {
-    if (!isPreferencesOpen) {
-      return;
-    }
-
-    const handleEscape = (event: KeyboardEvent) => {
+    const handleKeydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsPreferencesOpen(false);
+        if (isPreferencesOpen) {
+          setIsPreferencesOpen(false);
+          return;
+        }
+
+        if (isReaderOpen) {
+          setIsReaderOpen(false);
+        }
+      }
+
+      if (
+        event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key === "Enter" &&
+        document.activeElement === sourceEditorRef.current
+      ) {
+        event.preventDefault();
+        setIsReaderOpen(true);
       }
     };
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener("keydown", handleKeydown);
 
     return () => {
-      window.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("keydown", handleKeydown);
     };
-  }, [isPreferencesOpen]);
+  }, [isPreferencesOpen, isReaderOpen]);
 
   return (
     <main className={`app-shell theme-${settings.theme} ${isReaderOpen ? "is-reader-open" : ""}`}>
-      <header className="topbar">
-        <div className="status-group" aria-label="document status">
-          {isReaderOpen ? (
-            <button
-              className="icon-button"
-              type="button"
-              aria-label="Close reader view"
-              onClick={() => setIsReaderOpen(false)}
-            >
-              ×
-            </button>
-          ) : (
-            <button
-              className="primary-button primary-button-left"
-              type="button"
-              onClick={() => setIsReaderOpen(true)}
-            >
-              Reader View
-            </button>
-          )}
-          <div className="status-pill">{readingSummary}</div>
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => setIsPreferencesOpen(true)}
-          >
-            Preferences
-          </button>
-        </div>
-      </header>
-
       <section className="workspace">
+        <div className="top-reveal-zone" aria-hidden="true" />
+        <div className="floating-controls-frame">
+          <div className="floating-controls" aria-label="document controls">
+            {isReaderOpen ? (
+              <button
+                className="floating-action-button"
+                type="button"
+                aria-label="Close reader view"
+                onClick={() => setIsReaderOpen(false)}
+              >
+                ×
+              </button>
+            ) : (
+              <button
+                className="floating-action-button"
+                type="button"
+                onClick={() => setIsReaderOpen(true)}
+              >
+                Reader View
+              </button>
+            )}
+            <button
+              className="floating-icon-button"
+              type="button"
+              aria-label="Open preferences"
+              onClick={() => setIsPreferencesOpen(true)}
+            >
+              <span aria-hidden="true">⚙</span>
+            </button>
+          </div>
+        </div>
+
         <label
           className="source-editor-shell"
           aria-hidden={isReaderOpen}
@@ -216,6 +228,7 @@ function App() {
         >
           <span className="sr-only">Markdown source</span>
           <textarea
+            ref={sourceEditorRef}
             className="source-editor"
             value={source}
             onChange={(event) => setSource(event.target.value)}
@@ -283,6 +296,7 @@ function App() {
                   <option value="serif">Serif</option>
                   <option value="sans">Sans</option>
                   <option value="mono">Mono</option>
+                  <option value="atkinson-next">Atkinson Next</option>
                 </select>
               </label>
 
