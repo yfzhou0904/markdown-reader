@@ -2,41 +2,38 @@
 
 ## Goal
 
-Ship a local macOS desktop app that turns raw Markdown into a comfortable reader experience with persistent presentation settings.
+Ship a local macOS desktop app that turns pasted or typed Markdown into a comfortable reading surface with persistent presentation settings.
 
-## User story
+## Product decisions
 
-As a user reading long AI-generated or hand-written Markdown documents, I want to paste or open Markdown and read it in a polished, typography-driven interface without needing a browser tab or a technical preview tool.
+- local-first: the app works without accounts, sync, or network dependence
+- reading-first: the UI should feel closer to a reading app than a code preview
+- draft-first: the current document is an unsaved working draft restored on relaunch
+- narrow controls: typography and theme settings are curated rather than endlessly configurable
+- macOS-native shell: window state and title bar behavior can use Tauri-native integrations when that improves the reading experience
 
 ## Success criteria
 
 - the app works fully offline
-- a pasted Markdown document renders within a reader-oriented layout
+- a pasted or typed Markdown document renders within a reader-oriented layout
 - reader settings persist across app restarts
+- the last draft persists across app restarts
 - the experience feels closer to a reading app than a code tool
 
 ## MVP functional requirements
 
 ### 1. Document input
 
-- paste plain Markdown from clipboard
-- open local `.md` files
+- paste or type plain Markdown into the source pane
 - restore the last unsaved draft on launch
 
 ### 2. Rendering
 
-- convert Markdown to sanitized HTML
-- support standard Markdown structures:
-  - headings
-  - paragraphs
-  - emphasis
-  - links
-  - lists
-  - blockquotes
-  - code fences
-  - tables
-  - task lists
-- syntax highlight code blocks
+- render Markdown with `react-markdown` and `remark-gfm`
+- support common GitHub-flavored Markdown structures including tables and task lists
+- open external HTTP(S) links safely in a new window
+- render Mermaid code fences as diagrams when valid, and fall back to code blocks when invalid
+- do not execute raw HTML from the document
 
 ### 3. Reader controls
 
@@ -44,14 +41,21 @@ As a user reading long AI-generated or hand-written Markdown documents, I want t
 - adjust font size
 - support keyboard shortcuts for font size in reader view
 - adjust line height
-- adjust content width
-- switch among light, dark, and sepia themes
+- switch among light, paper, and dark themes
+- open an immersive reader view separate from the source pane
+- open preferences in a modal rather than a persistent settings rail
 
 ### 4. Local persistence
 
-- save preferences locally
-- save last document locally
+- save preferences in local storage
+- save the last document in local storage
 - restore both on relaunch
+
+### 5. Desktop behavior
+
+- package as a Tauri desktop app
+- restore the previous window size and position on relaunch
+- on macOS, keep the native title bar visually aligned with the active reader theme
 
 ## Out of scope
 
@@ -62,30 +66,18 @@ As a user reading long AI-generated or hand-written Markdown documents, I want t
 - publishing workflow
 - public URLs
 - rich Markdown authoring tools
+- opening local files
+- recent files
+- syntax highlighting
+- arbitrary layout controls such as reader width sliders
 - mobile app
-
-## Suggested implementation order
-
-1. Scaffold Tauri + React + TypeScript app
-2. Build base two-pane shell: input + reader
-3. Add Markdown render pipeline with sanitization
-4. Implement CSS variable-based reader controls
-5. Persist document and settings locally
-6. Add file-open workflow
-7. Add syntax highlighting
-8. Manual polish pass for typography and spacing
 
 ## Acceptance checklist
 
-- can paste Markdown and immediately read it
+- can paste or type Markdown and immediately read it
 - no network access is required for the core flow
 - changing controls updates the reader instantly
 - relaunch preserves prior reader settings
 - relaunch restores the previous draft
+- reader view is available without losing the underlying draft
 - large documents remain usable
-
-## Open questions
-
-- whether to use `markdown-it` or `remark/rehype`
-- whether the default view is split-pane or reader-first with collapsible source
-- where Tauri-side persistence should live versus frontend storage
