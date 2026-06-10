@@ -308,6 +308,7 @@ textarea {
   padding: 88px 48px 64px;
   color: var(--reader-text);
   font-size: var(--reader-font-size);
+  font-weight: var(--reader-font-weight);
   line-height: var(--reader-line-height);
 }
 
@@ -346,6 +347,7 @@ textarea {
 .reader-preview h5,
 .reader-preview h6 {
   margin: 1.35em 0 0.55em;
+  font-weight: var(--reader-heading-weight);
   line-height: 1.15;
   letter-spacing: 0;
 }
@@ -369,6 +371,11 @@ textarea {
 .reader-preview pre,
 .reader-preview table {
   margin: 0 0 1em;
+}
+
+.reader-preview strong,
+.reader-preview th {
+  font-weight: var(--reader-strong-weight);
 }
 
 .modal-backdrop {

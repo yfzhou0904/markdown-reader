@@ -19,7 +19,7 @@ Integration points:
 ## State model
 
 - `document state`: one current Markdown draft string
-- `reader settings`: theme, font family, font size, and line height
+- `reader settings`: theme, font family, font size, font weight, and line height
 - `view state`: whether reader mode or preferences modal is open
 - `derived state`: word count, estimated reading time, rendered Mermaid output
 
@@ -42,7 +42,7 @@ The app treats Markdown as untrusted input by not enabling raw HTML rendering.
 - default mode is a two-pane shell: source on the left, reader on the right
 - reader mode turns the preview into the primary surface without destroying the draft
 - preferences live in a modal instead of an always-visible sidebar
-- controls stay intentionally narrow: font family, font size, line height, theme, and reset
+- controls stay intentionally narrow: font family, font size, font weight, line height, theme, and reset
 
 The product decision is to optimize for reading comfort, not authoring power.
 

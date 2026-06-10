@@ -11,6 +11,7 @@ type Theme = "light" | "paper" | "dark";
 type ReaderSettings = {
   fontFamily: FontFamily;
   fontSize: number;
+  fontWeight: number;
   lineHeight: number;
   theme: Theme;
 };
@@ -18,6 +19,12 @@ type ReaderSettings = {
 const FONT_SIZE_MIN = 16;
 const FONT_SIZE_MAX = 28;
 const FONT_SIZE_STEP = 1;
+const FONT_WEIGHT_MIN = 300;
+const FONT_WEIGHT_MAX = 700;
+const FONT_WEIGHT_STEP = 50;
+const LINE_HEIGHT_MIN = 1.4;
+const LINE_HEIGHT_MAX = 2.1;
+const LINE_HEIGHT_STEP = 0.05;
 
 const STORAGE_KEYS = {
   markdown: "markdown-reader.document",
@@ -59,6 +66,7 @@ flowchart LR
 const DEFAULT_SETTINGS: ReaderSettings = {
   fontFamily: "serif",
   fontSize: 19,
+  fontWeight: 400,
   lineHeight: 1.75,
   theme: "paper",
 };
@@ -100,9 +108,19 @@ function readStoredSettings(): ReaderSettings {
           : "serif",
       fontSize:
         typeof parsed.fontSize === "number" ? parsed.fontSize : DEFAULT_SETTINGS.fontSize,
+      fontWeight:
+        typeof parsed.fontWeight === "number"
+          ? Math.min(
+              FONT_WEIGHT_MAX,
+              Math.max(FONT_WEIGHT_MIN, Math.round(parsed.fontWeight / FONT_WEIGHT_STEP) * FONT_WEIGHT_STEP),
+            )
+          : DEFAULT_SETTINGS.fontWeight,
       lineHeight:
         typeof parsed.lineHeight === "number"
-          ? parsed.lineHeight
+          ? Math.min(
+              LINE_HEIGHT_MAX,
+              Math.max(LINE_HEIGHT_MIN, parsed.lineHeight),
+            )
           : DEFAULT_SETTINGS.lineHeight,
       theme:
         parsed.theme === "light" ||
@@ -116,6 +134,16 @@ function readStoredSettings(): ReaderSettings {
   } catch {
     return DEFAULT_SETTINGS;
   }
+}
+
+function getReaderEmphasisWeights(fontWeight: number): {
+  strongWeight: number;
+  headingWeight: number;
+} {
+  return {
+    strongWeight: Math.min(700, fontWeight + 100),
+    headingWeight: Math.min(800, fontWeight + 200),
+  };
 }
 
 function App() {
@@ -186,6 +214,7 @@ function App() {
       }) as const,
     [],
   );
+  const emphasisWeights = getReaderEmphasisWeights(settings.fontWeight);
 
   const handleReset = () => {
     setSource(DEFAULT_MARKDOWN);
@@ -307,6 +336,9 @@ function App() {
             style={
               {
                 "--reader-font-size": `${settings.fontSize}px`,
+                "--reader-font-weight": settings.fontWeight,
+                "--reader-strong-weight": emphasisWeights.strongWeight,
+                "--reader-heading-weight": emphasisWeights.headingWeight,
                 "--reader-line-height": settings.lineHeight,
               } as CSSProperties
             }
@@ -382,13 +414,33 @@ function App() {
               </label>
 
               <label className="control-row">
+                <span>Font weight</span>
+                <div className="slider-control">
+                  <input
+                    type="range"
+                    min={FONT_WEIGHT_MIN}
+                    max={FONT_WEIGHT_MAX}
+                    step={FONT_WEIGHT_STEP}
+                    value={settings.fontWeight}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        fontWeight: Number(event.target.value),
+                      }))
+                    }
+                  />
+                  <strong>{settings.fontWeight}</strong>
+                </div>
+              </label>
+
+              <label className="control-row">
                 <span>Line height</span>
                 <div className="slider-control">
                   <input
                     type="range"
-                    min="1.4"
-                    max="2.1"
-                    step="0.05"
+                    min={LINE_HEIGHT_MIN}
+                    max={LINE_HEIGHT_MAX}
+                    step={LINE_HEIGHT_STEP}
                     value={settings.lineHeight}
                     onChange={(event) =>
                       setSettings((current) => ({

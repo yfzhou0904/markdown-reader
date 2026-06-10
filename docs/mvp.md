@@ -40,6 +40,7 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 - choose font family from a small curated set
 - adjust font size
 - support keyboard shortcuts for font size in reader view
+- adjust font weight
 - adjust line height
 - switch among light, paper, and dark themes
 - open an immersive reader view separate from the source pane
