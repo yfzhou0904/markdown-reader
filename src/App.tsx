@@ -299,7 +299,7 @@ function App() {
   useEffect(() => {
     const { red, green, blue } = MACOS_THEME_WINDOW_COLORS[settings.theme];
 
-    void invoke("sync_window_theme", { red, green, blue }).catch(() => {
+    void invoke("sync_window_theme", { theme: settings.theme, red, green, blue }).catch(() => {
       // Ignore on non-Tauri/web contexts and unsupported platforms.
     });
   }, [settings.theme]);
