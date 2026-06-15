@@ -130,6 +130,7 @@ function sanitizeWorkspace(candidate: unknown): WorkspaceState | null {
     return null;
   }
 
+  const seenIds = new Set<string>();
   const sanitizedTabs = tabs.flatMap((tab) => {
     if (!tab || typeof tab !== "object") {
       return [];
@@ -141,6 +142,11 @@ function sanitizeWorkspace(candidate: unknown): WorkspaceState | null {
       return [];
     }
 
+    if (seenIds.has(id)) {
+      return [];
+    }
+
+    seenIds.add(id);
     return [{ id, markdown }];
   });
 
@@ -377,15 +383,15 @@ function App() {
   const handleCloseTab = (tabId: string) => {
     setWorkspace((current) => {
       if (current.tabs.length === 1) {
-        const replacement = createTab();
-
-        return {
-          tabs: [replacement],
-          activeTabId: replacement.id,
-        };
+        return current;
       }
 
       const closingIndex = current.tabs.findIndex((tab) => tab.id === tabId);
+
+      if (closingIndex === -1) {
+        return current;
+      }
+
       const nextTabs = current.tabs.filter((tab) => tab.id !== tabId);
 
       if (nextTabs.length === 0) {
@@ -444,8 +450,10 @@ function App() {
       }
 
       if (isPrimaryShortcut(event) && !event.shiftKey && event.key.toLowerCase() === "w") {
-        event.preventDefault();
-        handleCloseTab(workspace.activeTabId);
+        if (workspace.tabs.length > 1) {
+          event.preventDefault();
+          handleCloseTab(workspace.activeTabId);
+        }
       }
 
       const isPrimaryModifier = isPrimaryShortcut(event);

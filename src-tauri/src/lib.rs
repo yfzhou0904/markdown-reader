@@ -1,3 +1,5 @@
+#[cfg(desktop)]
+use tauri::menu::Menu;
 use tauri::{Manager, WebviewWindow};
 
 #[tauri::command]
@@ -40,6 +42,9 @@ pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![sync_window_theme]);
+
+    #[cfg(desktop)]
+    let builder = builder.menu(|app| Menu::default(app));
 
     #[cfg(desktop)]
     let builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
