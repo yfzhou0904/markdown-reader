@@ -9,6 +9,7 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 - local-first: the app works without accounts, sync, or network dependence
 - reading-first: the UI should feel closer to a reading app than a code preview
 - draft-first: the current document is an unsaved working draft restored on relaunch
+- draft-tabs: the app can keep multiple unsaved local drafts open as tabs in one window
 - narrow controls: typography and theme settings are curated rather than endlessly configurable
 - macOS-native shell: window state and title bar behavior can use Tauri-native integrations when that improves the reading experience
 
@@ -17,7 +18,7 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 - the app works fully offline
 - a pasted or typed Markdown document renders within a reader-oriented layout
 - reader settings persist across app restarts
-- the last draft persists across app restarts
+- open drafts persist across app restarts
 - the experience feels closer to a reading app than a code tool
 
 ## MVP functional requirements
@@ -25,7 +26,8 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 ### 1. Document input
 
 - paste or type plain Markdown into the source pane
-- restore the last unsaved draft on launch
+- open multiple unsaved local drafts as tabs
+- restore open tabs and the active tab on launch
 
 ### 2. Rendering
 
@@ -40,6 +42,8 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 - choose font family from a small curated set
 - adjust font size
 - support keyboard shortcuts for font size in reader view
+- support `Cmd/Ctrl+T` for a new tab
+- support `Cmd/Ctrl+W` to close the active tab
 - adjust font weight
 - adjust line height
 - switch among light, paper, and dark themes
@@ -49,7 +53,7 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 ### 4. Local persistence
 
 - save preferences in local storage
-- save the last document in local storage
+- save open tabs and the active tab in local storage
 - restore both on relaunch
 
 ### 5. Desktop behavior
@@ -79,6 +83,7 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 - no network access is required for the core flow
 - changing controls updates the reader instantly
 - relaunch preserves prior reader settings
-- relaunch restores the previous draft
+- relaunch restores open drafts and the active tab
 - reader view is available without losing the underlying draft
+- multiple drafts can stay open without leaving the main window
 - large documents remain usable

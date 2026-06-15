@@ -16,6 +16,16 @@ type ReaderSettings = {
   theme: Theme;
 };
 
+type DocumentTab = {
+  id: string;
+  markdown: string;
+};
+
+type WorkspaceState = {
+  tabs: DocumentTab[];
+  activeTabId: string;
+};
+
 const FONT_SIZE_MIN = 16;
 const FONT_SIZE_MAX = 28;
 const FONT_SIZE_STEP = 1;
@@ -28,6 +38,7 @@ const LINE_HEIGHT_STEP = 0.05;
 
 const STORAGE_KEYS = {
   markdown: "markdown-reader.document",
+  workspace: "markdown-reader.workspace",
   settings: "markdown-reader.settings",
 } as const;
 
@@ -89,6 +100,85 @@ function readStoredMarkdown(): string {
   return stored && stored.trim().length > 0 ? stored : DEFAULT_MARKDOWN;
 }
 
+function createTab(markdown = ""): DocumentTab {
+  return {
+    id:
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    markdown,
+  };
+}
+
+function createWorkspace(markdown = ""): WorkspaceState {
+  const initialTab = createTab(markdown);
+
+  return {
+    tabs: [initialTab],
+    activeTabId: initialTab.id,
+  };
+}
+
+function sanitizeWorkspace(candidate: unknown): WorkspaceState | null {
+  if (!candidate || typeof candidate !== "object") {
+    return null;
+  }
+
+  const { tabs, activeTabId } = candidate as Partial<WorkspaceState>;
+
+  if (!Array.isArray(tabs) || typeof activeTabId !== "string") {
+    return null;
+  }
+
+  const sanitizedTabs = tabs.flatMap((tab) => {
+    if (!tab || typeof tab !== "object") {
+      return [];
+    }
+
+    const { id, markdown } = tab as Partial<DocumentTab>;
+
+    if (typeof id !== "string" || id.length === 0 || typeof markdown !== "string") {
+      return [];
+    }
+
+    return [{ id, markdown }];
+  });
+
+  if (sanitizedTabs.length === 0) {
+    return null;
+  }
+
+  const activeTabExists = sanitizedTabs.some((tab) => tab.id === activeTabId);
+
+  return {
+    tabs: sanitizedTabs,
+    activeTabId: activeTabExists ? activeTabId : sanitizedTabs[0].id,
+  };
+}
+
+function readStoredWorkspace(): WorkspaceState {
+  const storedWorkspace = window.localStorage.getItem(STORAGE_KEYS.workspace);
+
+  if (storedWorkspace === null) {
+    return createWorkspace(readStoredMarkdown());
+  }
+
+  if (storedWorkspace) {
+    try {
+      const parsed = JSON.parse(storedWorkspace) as unknown;
+      const sanitized = sanitizeWorkspace(parsed);
+
+      if (sanitized) {
+        return sanitized;
+      }
+    } catch {
+      // Fall through to invalid-workspace recovery.
+    }
+  }
+
+  return createWorkspace(DEFAULT_MARKDOWN);
+}
+
 function readStoredSettings(): ReaderSettings {
   const stored = window.localStorage.getItem(STORAGE_KEYS.settings);
 
@@ -146,20 +236,51 @@ function getReaderEmphasisWeights(fontWeight: number): {
   };
 }
 
+function getDocumentTitle(markdown: string, index: number): string {
+  const headingMatch = markdown.match(/^\s*#\s+(.+?)\s*$/m);
+  const firstLine = markdown
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+  const candidate = headingMatch?.[1] ?? firstLine;
+
+  return candidate && candidate.length > 0 ? candidate : `Untitled ${index + 1}`;
+}
+
+function isPrimaryShortcut(event: KeyboardEvent): boolean {
+  return (event.metaKey || event.ctrlKey) && !(event.metaKey && event.ctrlKey) && !event.altKey;
+}
+
 function App() {
-  const [source, setSource] = useState<string>(() => readStoredMarkdown());
+  const [workspace, setWorkspace] = useState<WorkspaceState>(() => readStoredWorkspace());
   const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const sourceEditorRef = useRef<HTMLTextAreaElement>(null);
 
+  const activeTab = useMemo(
+    () => workspace.tabs.find((tab) => tab.id === workspace.activeTabId) ?? workspace.tabs[0],
+    [workspace],
+  );
+  const source = activeTab?.markdown ?? "";
+  const tabTitles = useMemo(
+    () => workspace.tabs.map((tab, index) => ({ id: tab.id, title: getDocumentTitle(tab.markdown, index) })),
+    [workspace.tabs],
+  );
+
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEYS.markdown, source);
-  }, [source]);
+    window.localStorage.setItem(STORAGE_KEYS.workspace, JSON.stringify(workspace));
+  }, [workspace]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    const activeTitle =
+      tabTitles.find((tab) => tab.id === workspace.activeTabId)?.title ?? "Markdown Reader";
+    document.title = `${activeTitle} - Markdown Reader`;
+  }, [tabTitles, workspace.activeTabId]);
 
   useEffect(() => {
     if (isReaderOpen) {
@@ -173,7 +294,7 @@ function App() {
     return () => {
       window.cancelAnimationFrame(focusFrame);
     };
-  }, [isReaderOpen]);
+  }, [isReaderOpen, workspace.activeTabId]);
 
   useEffect(() => {
     const { red, green, blue } = MACOS_THEME_WINDOW_COLORS[settings.theme];
@@ -216,8 +337,81 @@ function App() {
   );
   const emphasisWeights = getReaderEmphasisWeights(settings.fontWeight);
 
+  const updateActiveTabMarkdown = (markdown: string) => {
+    setWorkspace((current) => ({
+      ...current,
+      tabs: current.tabs.map((tab) =>
+        tab.id === current.activeTabId
+          ? {
+              ...tab,
+              markdown,
+            }
+          : tab,
+      ),
+    }));
+  };
+
+  const handleCreateTab = () => {
+    const nextTab = createTab();
+
+    setWorkspace((current) => ({
+      tabs: [...current.tabs, nextTab],
+      activeTabId: nextTab.id,
+    }));
+
+    setIsPreferencesOpen(false);
+    setIsReaderOpen(false);
+  };
+
+  const handleSelectTab = (tabId: string) => {
+    setWorkspace((current) =>
+      current.activeTabId === tabId
+        ? current
+        : {
+            ...current,
+            activeTabId: tabId,
+          },
+    );
+  };
+
+  const handleCloseTab = (tabId: string) => {
+    setWorkspace((current) => {
+      if (current.tabs.length === 1) {
+        const replacement = createTab();
+
+        return {
+          tabs: [replacement],
+          activeTabId: replacement.id,
+        };
+      }
+
+      const closingIndex = current.tabs.findIndex((tab) => tab.id === tabId);
+      const nextTabs = current.tabs.filter((tab) => tab.id !== tabId);
+
+      if (nextTabs.length === 0) {
+        return current;
+      }
+
+      if (current.activeTabId !== tabId) {
+        return {
+          ...current,
+          tabs: nextTabs,
+        };
+      }
+
+      const fallbackIndex = Math.max(0, closingIndex - 1);
+
+      return {
+        tabs: nextTabs,
+        activeTabId: nextTabs[fallbackIndex]?.id ?? nextTabs[0].id,
+      };
+    });
+
+    setIsPreferencesOpen(false);
+  };
+
   const handleReset = () => {
-    setSource(DEFAULT_MARKDOWN);
+    updateActiveTabMarkdown(DEFAULT_MARKDOWN);
     setSettings(DEFAULT_SETTINGS);
   };
 
@@ -235,9 +429,7 @@ function App() {
       }
 
       if (
-        event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
+        isPrimaryShortcut(event) &&
         !event.shiftKey &&
         event.key === "Enter" &&
         document.activeElement === sourceEditorRef.current
@@ -246,13 +438,23 @@ function App() {
         setIsReaderOpen(true);
       }
 
-      const isMetaOnlyModifier = event.metaKey && !event.ctrlKey && !event.altKey;
+      if (isPrimaryShortcut(event) && !event.shiftKey && event.key.toLowerCase() === "t") {
+        event.preventDefault();
+        handleCreateTab();
+      }
+
+      if (isPrimaryShortcut(event) && !event.shiftKey && event.key.toLowerCase() === "w") {
+        event.preventDefault();
+        handleCloseTab(workspace.activeTabId);
+      }
+
+      const isPrimaryModifier = isPrimaryShortcut(event);
       const isIncreaseFontKey =
         event.key === "+" || event.key === "=" || event.code === "NumpadAdd";
       const isDecreaseFontKey =
         event.key === "-" || event.key === "_" || event.code === "NumpadSubtract";
 
-      if (isReaderOpen && !isPreferencesOpen && isMetaOnlyModifier && isIncreaseFontKey) {
+      if (isReaderOpen && !isPreferencesOpen && isPrimaryModifier && isIncreaseFontKey) {
         event.preventDefault();
         setSettings((current) => ({
           ...current,
@@ -260,7 +462,7 @@ function App() {
         }));
       }
 
-      if (isReaderOpen && !isPreferencesOpen && isMetaOnlyModifier && isDecreaseFontKey) {
+      if (isReaderOpen && !isPreferencesOpen && isPrimaryModifier && isDecreaseFontKey) {
         event.preventDefault();
         setSettings((current) => ({
           ...current,
@@ -274,10 +476,14 @@ function App() {
     return () => {
       window.removeEventListener("keydown", handleKeydown);
     };
-  }, [isPreferencesOpen, isReaderOpen]);
+  }, [isPreferencesOpen, isReaderOpen, workspace.activeTabId]);
 
   return (
-    <main className={`app-shell theme-${settings.theme} ${isReaderOpen ? "is-reader-open" : ""}`}>
+    <main
+      className={`app-shell theme-${settings.theme} ${isReaderOpen ? "is-reader-open" : ""} ${
+        workspace.tabs.length > 1 ? "has-tabs" : ""
+      }`}
+    >
       <section className="workspace">
         <div className="top-reveal-zone" aria-hidden="true" />
         <div className="floating-controls-frame">
@@ -303,6 +509,14 @@ function App() {
             <button
               className="floating-icon-button"
               type="button"
+              aria-label="Open new tab"
+              onClick={handleCreateTab}
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+            <button
+              className="floating-icon-button"
+              type="button"
               aria-label="Open preferences"
               onClick={() => setIsPreferencesOpen(true)}
             >
@@ -310,6 +524,44 @@ function App() {
             </button>
           </div>
         </div>
+
+        {workspace.tabs.length > 1 ? (
+          <header className="workspace-header">
+            <div className="tab-strip" role="tablist" aria-label="Open documents">
+              {tabTitles.map((tab) => {
+                const isActive = tab.id === workspace.activeTabId;
+
+                return (
+                  <div
+                    key={tab.id}
+                    className={`tab-pill ${isActive ? "is-active" : ""}`}
+                    role="presentation"
+                  >
+                    <button
+                      className="tab-select-button"
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls={`document-panel-${tab.id}`}
+                      id={`document-tab-${tab.id}`}
+                      onClick={() => handleSelectTab(tab.id)}
+                    >
+                      <span>{tab.title}</span>
+                    </button>
+                    <button
+                      className="tab-close-button"
+                      type="button"
+                      aria-label={`Close ${tab.title}`}
+                      onClick={() => handleCloseTab(tab.id)}
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </header>
+        ) : null}
 
         <label
           className="source-editor-shell"
@@ -321,7 +573,7 @@ function App() {
             ref={sourceEditorRef}
             className="source-editor"
             value={source}
-            onChange={(event) => setSource(event.target.value)}
+            onChange={(event) => updateActiveTabMarkdown(event.target.value)}
             spellCheck={false}
             placeholder="Paste Markdown here"
           />
@@ -330,6 +582,9 @@ function App() {
           className="reader-card"
           aria-hidden={!isReaderOpen}
           inert={!isReaderOpen}
+          id={`document-panel-${workspace.activeTabId}`}
+          role={workspace.tabs.length > 1 ? "tabpanel" : undefined}
+          aria-labelledby={workspace.tabs.length > 1 ? `document-tab-${workspace.activeTabId}` : undefined}
         >
           <article
             className={`reader-preview font-${settings.fontFamily}`}
