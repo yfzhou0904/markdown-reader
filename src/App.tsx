@@ -126,7 +126,7 @@ function sanitizeWorkspace(candidate: unknown): WorkspaceState | null {
 
   const { tabs, activeTabId } = candidate as Partial<WorkspaceState>;
 
-  if (!Array.isArray(tabs) || typeof activeTabId !== "string") {
+  if (!Array.isArray(tabs)) {
     return null;
   }
 
