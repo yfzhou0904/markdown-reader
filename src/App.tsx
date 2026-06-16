@@ -182,7 +182,7 @@ function readStoredWorkspace(): WorkspaceState {
     }
   }
 
-  return createWorkspace(DEFAULT_MARKDOWN);
+  return createWorkspace(readStoredMarkdown());
 }
 
 function readStoredSettings(): ReaderSettings {
@@ -263,6 +263,8 @@ function App() {
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const sourceEditorRef = useRef<HTMLTextAreaElement>(null);
+  const workspaceRef = useRef(workspace);
+  workspaceRef.current = workspace;
 
   const activeTab = useMemo(
     () => workspace.tabs.find((tab) => tab.id === workspace.activeTabId) ?? workspace.tabs[0],
@@ -450,9 +452,9 @@ function App() {
       }
 
       if (isPrimaryShortcut(event) && !event.shiftKey && event.key.toLowerCase() === "w") {
-        if (workspace.tabs.length > 1) {
+        if (workspaceRef.current.tabs.length > 1) {
           event.preventDefault();
-          handleCloseTab(workspace.activeTabId);
+          handleCloseTab(workspaceRef.current.activeTabId);
         }
       }
 
@@ -550,7 +552,7 @@ function App() {
                       type="button"
                       role="tab"
                       aria-selected={isActive}
-                      aria-controls={`document-panel-${tab.id}`}
+                      aria-controls="document-panel"
                       id={`document-tab-${tab.id}`}
                       onClick={() => handleSelectTab(tab.id)}
                     >
@@ -590,7 +592,7 @@ function App() {
           className="reader-card"
           aria-hidden={!isReaderOpen}
           inert={!isReaderOpen}
-          id={`document-panel-${workspace.activeTabId}`}
+          id="document-panel"
           role={workspace.tabs.length > 1 ? "tabpanel" : undefined}
           aria-labelledby={workspace.tabs.length > 1 ? `document-tab-${workspace.activeTabId}` : undefined}
         >
