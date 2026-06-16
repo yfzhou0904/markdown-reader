@@ -7,7 +7,7 @@ The app stays simple:
 - `frontend`: React UI for source input, reader surface, preferences, and reader mode
 - `desktop shell`: Tauri for packaging plus window-specific native behavior
 - `render pipeline`: `react-markdown` + `remark-gfm` with a Mermaid override
-- `local state`: draft and reader preferences in browser storage
+- `local state`: draft tabs and reader preferences in browser storage
 
 Integration points:
 - [src/App.tsx](../src/App.tsx)
@@ -18,12 +18,12 @@ Integration points:
 
 ## State model
 
-- `document state`: one current Markdown draft string
+- `document state`: a workspace of local draft tabs plus the active tab id
 - `reader settings`: theme, font family, font size, font weight, and line height
 - `view state`: whether reader mode or preferences modal is open
 - `derived state`: word count, estimated reading time, rendered Mermaid output
 
-Document and settings persist independently under stable local-storage keys.
+The workspace and settings persist independently under stable local-storage keys. The workspace store migrates the legacy single-draft key into one initial tab on first load.
 
 ## Rendering pipeline
 
@@ -40,6 +40,7 @@ The app treats Markdown as untrusted input by not enabling raw HTML rendering.
 ## UI model
 
 - default mode is a two-pane shell: source on the left, reader on the right
+- multiple drafts stay in one Tauri window as tabs, with the tab strip shown only when more than one draft is open
 - reader mode turns the preview into the primary surface without destroying the draft
 - preferences live in a modal instead of an always-visible sidebar
 - controls stay intentionally narrow: font family, font size, font weight, line height, theme, and reset
@@ -48,7 +49,7 @@ The product decision is to optimize for reading comfort, not authoring power.
 
 ## Persistence model
 
-- the frontend stores the current draft and settings in local storage
+- the frontend stores the draft workspace and settings in local storage
 - the Tauri shell restores native window size and position across relaunches
 - on macOS, the frontend can push theme changes into the native window background so the transparent title bar tracks the active reader theme
 
