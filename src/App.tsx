@@ -154,11 +154,11 @@ function sanitizeWorkspace(candidate: unknown): WorkspaceState | null {
     return null;
   }
 
-  const activeTabExists = sanitizedTabs.some((tab) => tab.id === activeTabId);
+  const activeTab = sanitizedTabs.find((tab) => tab.id === activeTabId);
 
   return {
     tabs: sanitizedTabs,
-    activeTabId: activeTabExists ? activeTabId : sanitizedTabs[0].id,
+    activeTabId: activeTab?.id ?? sanitizedTabs[0].id,
   };
 }
 
