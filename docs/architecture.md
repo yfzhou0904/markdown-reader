@@ -6,7 +6,7 @@ The app stays simple:
 
 - `frontend`: React UI for source input, reader surface, preferences, and reader mode
 - `desktop shell`: Tauri for packaging plus window-specific native behavior
-- `render pipeline`: `react-markdown` + `remark-gfm` with a Mermaid override
+- `render pipeline`: `react-markdown` + `remark-gfm` + KaTeX-backed math rendering with a Mermaid override
 - `local state`: draft tabs and reader preferences in browser storage
 
 Integration points:
@@ -31,6 +31,7 @@ The document is rendered directly from Markdown in the React tree rather than th
 
 - `react-markdown` handles Markdown rendering
 - `remark-gfm` adds tables, task lists, and related GitHub-flavored Markdown features
+- `remark-math` + `rehype-katex` render LaTeX math
 - external links get `target="_blank"` and `rel="noopener noreferrer"`
 - Mermaid fences are intercepted and rendered client-side with strict Mermaid security settings
 - invalid Mermaid falls back to showing the original code block

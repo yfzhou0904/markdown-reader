@@ -33,6 +33,7 @@ Ship a local macOS desktop app that turns pasted or typed Markdown into a comfor
 
 - render Markdown with `react-markdown` and `remark-gfm`
 - support common GitHub-flavored Markdown structures including tables and task lists
+- render LaTeX math with KaTeX for `$$...$$`, `\[...\]`, and `\(...\)`
 - open external HTTP(S) links safely in a new window
 - render Mermaid code fences as diagrams when valid, and fall back to code blocks when invalid
 - do not execute raw HTML from the document

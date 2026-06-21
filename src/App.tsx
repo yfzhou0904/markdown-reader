@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ComponentProps } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import "katex/dist/katex.min.css";
 import "./App.css";
 import { Mermaid } from "./Mermaid";
 
@@ -257,6 +260,12 @@ function isPrimaryShortcut(event: KeyboardEvent): boolean {
   return (event.metaKey || event.ctrlKey) && !(event.metaKey && event.ctrlKey) && !event.altKey;
 }
 
+function normalizeLatexContent(markdown: string): string {
+  return markdown
+    .replace(/^\\\[([\s\S]+?)\\\]$/gm, (_match, inner: string) => `$$${inner}$$`)
+    .replace(/\\\((.+?)\\\)/g, (_match, inner: string) => `$$${inner}$$`);
+}
+
 function App() {
   const [workspace, setWorkspace] = useState<WorkspaceState>(() => readStoredWorkspace());
   const [settings, setSettings] = useState<ReaderSettings>(() => readStoredSettings());
@@ -271,6 +280,7 @@ function App() {
     [workspace],
   );
   const source = activeTab?.markdown ?? "";
+  const normalizedSource = useMemo(() => normalizeLatexContent(source), [source]);
   const tabTitles = useMemo(
     () => workspace.tabs.map((tab, index) => ({ id: tab.id, title: getDocumentTitle(tab.markdown, index) })),
     [workspace.tabs],
@@ -608,8 +618,12 @@ function App() {
               } as CSSProperties
             }
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {source}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: false }]]}
+              rehypePlugins={[rehypeKatex]}
+              components={markdownComponents}
+            >
+              {normalizedSource}
             </ReactMarkdown>
           </article>
         </div>
