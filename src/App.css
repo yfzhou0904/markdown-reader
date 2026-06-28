@@ -203,15 +203,10 @@ textarea {
   transition: transform 0.24s ease;
 }
 
-.top-reveal-zone:hover + .floating-controls-frame,
-.floating-controls-frame:hover,
-.floating-controls-frame:focus-within {
-  pointer-events: auto;
-}
-
 .top-reveal-zone:hover + .floating-controls-frame .floating-controls,
 .floating-controls-frame:hover .floating-controls,
 .floating-controls-frame:focus-within .floating-controls {
+  pointer-events: auto;
   transform: translate(-50%, 14px);
 }
 
